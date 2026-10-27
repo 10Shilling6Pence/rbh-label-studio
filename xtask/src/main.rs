@@ -82,7 +82,7 @@ fn main() -> ExitCode {
 
 /// Workspace root (parent of the xtask crate).
 pub fn root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).parent().expect("xtask has a parent dir").to_path_buf()
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("..")
 }
 
 /// Tracked and untracked (not ignored) files that exist, relative to `root`.
