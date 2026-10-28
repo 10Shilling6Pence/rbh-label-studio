@@ -309,7 +309,7 @@ mod win {
 mod portable {
     use std::borrow::Cow;
 
-    use super::*;
+    use super::{BITMAP, Flavour, PNG, SystemClipboard, TEXT, copied_file, decode_png, png_flavour, text_of};
 
     /// What our last write put on the clipboard.
     enum Ours {

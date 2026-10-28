@@ -1,5 +1,5 @@
 use super::prefs::save_prefs;
-use super::*;
+use super::{App, VectorcraftApp, file_access, window};
 
 /// The parts of [`App::raw_input_hook`] that every window needs, for the OS windows of floating
 /// panels: a click or Escape that closes the macOS menu bar's open menu, and the pen barrel

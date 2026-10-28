@@ -1,4 +1,4 @@
-use super::*;
+use super::{window, xwayland};
 
 /// The window, Dock, taskbar and app-switcher icon (`assets/app-icon/`, see its README). macOS gets
 /// the version with Apple's transparent margin; elsewhere the full-bleed tile. The app ID matches
