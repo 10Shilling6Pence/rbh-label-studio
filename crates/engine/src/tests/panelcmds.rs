@@ -940,7 +940,9 @@ fn artboard_display_marks_stay_out_of_exports() {
     let on = doc(&s);
     assert_ne!(on.artboards, off.artboards);
     assert_eq!(vectorcraft_svg::export(&on, &Default::default()), vectorcraft_svg::export(&off, &Default::default()));
-    assert_eq!(crate::export_pdf(&on, &Default::default()).unwrap(), crate::export_pdf(&off, &Default::default()).unwrap());
+    // Fix the export date so metadata does not change between the two exports.
+    let options = vectorcraft_pdf::PdfOptions { created: Some(0), ..Default::default() };
+    assert_eq!(crate::export_pdf(&on, &options).unwrap(), crate::export_pdf(&off, &options).unwrap());
 }
 
 /// Artboard Options' video display options: `artboard.setProps {showVideoSafeAreas,
