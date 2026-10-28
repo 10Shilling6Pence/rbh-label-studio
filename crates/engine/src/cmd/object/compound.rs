@@ -1,4 +1,6 @@
-use super::*;
+use super::{
+    Appearance, Arc, Document, EngineError, FillRule, Node, NodeId, NodeKind, Paint, PathData, Result, Session, Value, json, ok, selected_roots,
+};
 
 pub(super) fn compound_make(s: &mut Session, _: &Value) -> Result<Value> {
     let ids = selected_roots(s)?;
