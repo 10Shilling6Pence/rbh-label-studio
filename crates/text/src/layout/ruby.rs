@@ -19,12 +19,15 @@ pub(super) fn ruby_layout(cx: &mut Ctx<'_>, t: &TextObject) {
     let old_ascent = cx.out.lines.iter().map(|line| line.ascent).collect::<Vec<_>>();
     let old_descent = cx.out.lines.iter().map(|line| line.descent).collect::<Vec<_>>();
     let pieces = ruby_pieces(cx, t);
+    // Phase A: shape each reading, place it relative to the (unshifted) baseline, and note how
+    // far above/below the baseline its ink reaches.
     let placed = place_ruby_pieces(cx, &pieces, &base_baselines, &old_descent);
     if !placed.is_empty() {
         grow_ruby_lines(cx, t, placed, &old_ascent, &old_descent);
     }
 }
 
+// One piece of base text on one line, with the part of the reading that belongs to it.
 struct RubyPiece {
     line: usize,
     x0: f64,
@@ -50,6 +53,7 @@ fn ruby_pieces(cx: &Ctx<'_>, t: &TextObject) -> Vec<RubyPiece> {
     use std::collections::BTreeMap;
 
     let text_len = cx.text.len();
+    // The glyphs by their byte, to find a span's without a scan of them all for each span.
     let byte_of = |i: usize| cx.out.glyphs.get(i).map_or(0, |g| g.byte);
     let mut by_byte: Vec<usize> = (0..cx.out.glyphs.len()).collect();
     by_byte.sort_by_key(|&i| byte_of(i));
@@ -60,10 +64,13 @@ fn ruby_pieces(cx: &Ctx<'_>, t: &TextObject) -> Vec<RubyPiece> {
         if start >= end || span.text.trim().is_empty() {
             continue;
         }
+        // The base glyphs of the span, by line; a glyph's cluster is its byte range (`len`, or
+        // one byte for generated glyphs). A list marker is not part of the base.
         let mut by_line: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
         let hi = by_byte.partition_point(|&i| byte_of(i) < end);
         let lo = by_byte.partition_point(|&i| byte_of(i).saturating_add(longest) <= start).min(hi);
         let mut hits: Vec<usize> = by_byte.get(lo..hi).unwrap_or_default().to_vec();
+        // In glyph order, as the scan found them.
         hits.sort_unstable();
         for i in hits {
             let Some(glyph) = cx.out.glyphs.get(i) else { continue };
@@ -91,6 +98,8 @@ fn collect_ruby_pieces_for_span(
 ) {
     let reading: Vec<char> = span.text.trim().chars().collect();
     let ratio = span.safe_size_percent() / 100.0;
+    // Split the reading by each line's share of the base glyphs: cumulative fractions keep
+    // every character once and in order.
     let mut taken = 0;
     let mut done = 0;
     for (&line, glyph_indices) in by_line {
@@ -176,6 +185,8 @@ fn place_ruby_piece(cx: &Ctx<'_>, piece: &RubyPiece, baselines: &[f64], old_desc
 }
 
 fn ruby_baseline(piece: &RubyPiece, baseline: f64, reading_ascent: f64, reading_descent: f64, old_descent: &[f64]) -> f64 {
+    // Above: the reading's bottom sits on the base's em box top. Below: its top sits on the
+    // base's em box bottom (the line's descent below the baseline).
     if piece.position == RubyPosition::Above {
         baseline - piece.base_size - reading_descent
     } else {
@@ -192,6 +203,7 @@ fn ruby_destination(piece: &RubyPiece, base_width: f64, reading_width: f64) -> f
 }
 
 fn place_vertical_ruby(piece: &RubyPiece, reading: &[PositionedGlyph], asc: f64, desc: f64, base_width: f64, ruby_y: f64) -> Vec<PositionedGlyph> {
+    // Each reading character in its own cell along the column, upright once the lines turn.
     let cell = (asc + desc).max(piece.style.size * 0.5);
     let clusters = ruby_clusters(reading);
     let (ruby_width, squeeze) = ruby_width(clusters.len() as f64 * cell, base_width, piece.overhang);
@@ -239,6 +251,7 @@ fn place_horizontal_ruby(
     base_width: f64,
     ruby_y: f64,
 ) -> Vec<PositionedGlyph> {
+    // The reading set along the line: the line's extent, centred or aligned to the base.
     let reading_width = (line.x1 - line.x0).max(0.0);
     let (ruby_width, squeeze) = ruby_width(reading_width, base_width, piece.overhang);
     let x = ruby_destination(piece, base_width, ruby_width);
@@ -259,6 +272,7 @@ fn squeeze_transform(transform: Affine, x: f64, squeeze: f64) -> Affine {
 }
 
 fn ruby_ink_extents(glyphs: &[PositionedGlyph], baseline: f64) -> (f64, f64) {
+    // How far the reading reaches above and below the base line's baseline (its ink).
     let mut ascent: f64 = 0.0;
     let mut descent: f64 = 0.0;
     for glyph in glyphs.iter().filter(|glyph| !glyph.outline.elements().is_empty()) {
@@ -271,6 +285,9 @@ fn ruby_ink_extents(glyphs: &[PositionedGlyph], baseline: f64) -> (f64, f64) {
 
 fn grow_ruby_lines(cx: &mut Ctx<'_>, t: &TextObject, placed: Vec<PlacedRuby>, old_ascent: &[f64], old_descent: &[f64]) {
     let line_count = cx.out.lines.len();
+    // Phase B: grow each line's box to fit its ruby, then move the lines on after it by what they
+    // need in the block direction (the first line too for area type, so the ruby stays inside the
+    // frame; point type's first baseline is its anchor and stays).
     let mut growth = vec![0.0_f64; line_count];
     for ruby in &placed {
         if let (Some(asc), Some(desc), Some(slot)) = (old_ascent.get(ruby.line), old_descent.get(ruby.line), growth.get_mut(ruby.line)) {
@@ -278,6 +295,9 @@ fn grow_ruby_lines(cx: &mut Ctx<'_>, t: &TextObject, placed: Vec<PlacedRuby>, ol
             *slot = slot.max(grown.max(0.0));
         }
     }
+    // A line's ruby grows above it: the line moves on in the block direction by its own growth,
+    // so the line before it keeps its room (for area type the first line moves too, keeping the
+    // ruby inside the frame; point type's first baseline is its anchor and stays).
     let area = matches!(t.kind, TextKind::Area { .. });
     let mut shift = vec![0.0_f64; line_count];
     let mut cumulative = 0.0;
@@ -287,6 +307,7 @@ fn grow_ruby_lines(cx: &mut Ctx<'_>, t: &TextObject, placed: Vec<PlacedRuby>, ol
             shift[index] = cumulative;
         }
     }
+    // Grow the lines' boxes to fit their ruby, then move them on in the block direction.
     for ruby in &placed {
         if let Some(line) = cx.out.lines.get_mut(ruby.line) {
             line.ascent = line.ascent.max(ruby.ascent);
