@@ -55,9 +55,7 @@ lists every format read or written; importers are fuzzed (`crates/engine/tests/i
 Desktop printer discovery and PDF submission use `craft-print`, pinned to an immutable
 craft-libs revision. The engine still owns sheet composition, copies, separations and colour
 management. Submission runs on the existing background worker; its receipt or refusal
-reaches the status bar, and Quit waits for pending submissions. Windows 7 retains WMI discovery
-and the installed viewer's Print/PrintTo verb;
-its target excludes the shared backend because Windows.Data.Pdf is unavailable there.
+reaches the status bar, and Quit waits for pending submissions.
 
 PDF writing uses the optional `craft-pdf` writer at an immutable craft-libs revision. Shared
 configuration, metadata, font preparation and guarded serialization leave drawing, colour

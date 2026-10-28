@@ -113,8 +113,6 @@ pub(crate) fn native_options(custom_titlebar: bool) -> eframe::NativeOptions {
             .with_title_shown(false)
             .with_icon(app_icon())
             .with_app_id("ai.storyteller.vectorcraft"),
-        #[cfg(feature = "windows7")]
-        renderer: eframe::Renderer::Glow,
         ..Default::default()
     }
 }

@@ -266,7 +266,7 @@ pub(crate) fn services(parent: Parent, ui: egui::Context) -> Services {
         #[cfg(target_os = "macos")]
         stylus: mac_tablet::start(),
         // Windows reads it from the pen's pointer messages (`windows_stylus`).
-        #[cfg(all(windows, not(target_vendor = "win7")))]
+        #[cfg(windows)]
         stylus: Some(windows_stylus::start()),
         read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
         write: Some(Box::new(write_file)),
