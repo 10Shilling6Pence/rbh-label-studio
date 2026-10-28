@@ -1,4 +1,6 @@
 use super::prefs::save_prefs;
+#[cfg(all(windows, not(target_vendor = "win7")))]
+use super::windows_stylus;
 use super::{App, VectorcraftApp, file_access, window};
 
 /// The parts of [`App::raw_input_hook`] that every window needs, for the OS windows of floating

@@ -164,7 +164,9 @@ mod win {
 
     use clipboard_win::{formats, options::NoClear, raw};
 
-    use super::*;
+    use super::{
+        BITMAP, Cursor, Flavour, PNG, SVG, SystemClipboard, TEXT, copied_file, decode_png, dib_image, png_flavour, text_of, windows_formats,
+    };
 
     /// The device-independent bitmaps, the one that carries alpha first. Each is there whenever the
     /// other or a `CF_BITMAP` is: the system converts between them.
