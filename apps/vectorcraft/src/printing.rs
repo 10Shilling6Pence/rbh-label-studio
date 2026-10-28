@@ -38,7 +38,7 @@ impl PrintService for SystemPrint {
 
 #[cfg(not(all(windows, any(feature = "windows7", target_vendor = "win7"))))]
 mod system {
-    use super::*;
+    use super::{Command, PrintJob, Printer};
     pub fn printers() -> Vec<Printer> {
         craft_print::printers().into_iter().map(|p| Printer { name: p.name, default: p.default }).collect()
     }
