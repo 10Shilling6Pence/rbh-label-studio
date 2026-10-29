@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use rbh_labels::import_batch;
+use serde_json::json;
 
 const EXAMPLE: &str = include_str!("../examples/example_batch.json");
 
@@ -18,6 +19,34 @@ fn imports_graded_sample_and_custom() {
     assert!(batch.labels[1].subgrades.is_none());
     assert_eq!(batch.labels[2].grade_display, "C");
     assert_eq!(batch.labels[2].grade_title, "CUSTOM");
+}
+
+#[test]
+fn imported_print_rows_preserve_exact_four_lines() {
+    let mut data: serde_json::Value = serde_json::from_str(EXAMPLE).unwrap();
+    data["certifications"][0]["printRows"] = json!([
+        "2026 RIFTBOUND UNL EN", "RARE", "#197 DIANA, SCORN OF THE", "MOON"
+    ]);
+    let batch = import_batch(&data.to_string()).unwrap();
+    let rows = batch.labels[0].print_rows.as_ref().unwrap();
+    assert_eq!(rows[0], "2026 RIFTBOUND UNL EN");
+    assert_eq!(rows[2], "#197 DIANA, SCORN OF THE");
+    assert_eq!(rows[3], "MOON");
+    assert!(batch.labels[1].print_rows.is_none());
+}
+
+#[test]
+fn rejects_print_rows_with_fewer_than_four_lines() {
+    let mut data: serde_json::Value = serde_json::from_str(EXAMPLE).unwrap();
+    data["certifications"][0]["printRows"] = json!(["A", "B", "C"]);
+    assert!(import_batch(&data.to_string()).unwrap_err().contains("invalid RBH label JSON"));
+}
+
+#[test]
+fn rejects_print_row_exceeding_character_limit() {
+    let mut data: serde_json::Value = serde_json::from_str(EXAMPLE).unwrap();
+    data["certifications"][0]["printRows"] = json!(["W".repeat(33), "B", "C", ""]);
+    assert!(import_batch(&data.to_string()).unwrap_err().contains("printRows row 1"));
 }
 
 #[test]

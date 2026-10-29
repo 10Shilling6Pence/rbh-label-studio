@@ -79,6 +79,9 @@ pub struct ImportedCertification {
     pub grade: Option<f64>,
     #[serde(default)]
     pub subgrades: Option<Subgrades>,
+    /// Authoritative four label rows supplied by RBH Grading, when present.
+    #[serde(default)]
+    pub print_rows: Option<[String; 4]>,
     pub card: CardIdentity,
 }
 
@@ -131,6 +134,9 @@ pub struct PreparedLabel {
     pub subgrades: Option<Subgrades>,
     pub qr_url: String,
     pub card: CardIdentity,
+    /// Exact approved text, including an optional blank fourth line.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub print_rows: Option<[String; 4]>,
 }
 
 fn check_line(value: &str, field: &str, may_be_empty: bool) -> Result<(), String> {
@@ -151,6 +157,17 @@ fn validate_card(card: &CardIdentity) -> Result<(), String> {
     check_line(&card.variant, "card.variant", false)?;
     check_line(&card.set_number, "card.setNumber", true)?;
     check_line(&card.title, "card.title", false)?;
+    Ok(())
+}
+
+fn validate_print_rows(rows: &[String; 4]) -> Result<(), String> {
+    for (index, (text, max)) in rows.iter().zip([32, 32, 36, 36]).enumerate() {
+        let row = index + 1;
+        check_line(text, &format!("printRows row {row}"), row == 4)?;
+        if text.chars().count() > max {
+            return Err(format!("printRows row {row} exceeds {max} characters"));
+        }
+    }
     Ok(())
 }
 
@@ -191,6 +208,9 @@ pub fn import_batch(input: &str) -> Result<PreparedBatch, String> {
             return Err(format!("duplicate certification number {id}"));
         }
         validate_card(&cert.card).map_err(|e| format!("cert {id}: {e}"))?;
+        if let Some(rows) = &cert.print_rows {
+            validate_print_rows(rows).map_err(|e| format!("cert {id}: {e}"))?;
+        }
         let (grade_display, title, subgrades) = match cert.classification {
             Classification::Graded => {
                 let grade = cert.grade.ok_or_else(|| format!("cert {id}: missing grade"))?;
@@ -219,6 +239,7 @@ pub fn import_batch(input: &str) -> Result<PreparedBatch, String> {
             subgrades,
             qr_url: format!("{QR_BASE}{}", cert.certification_number),
             card: cert.card,
+            print_rows: cert.print_rows,
         });
     }
     Ok(PreparedBatch { schema_version: SCHEMA_VERSION, order_number: batch.order_number, labels })

@@ -2,7 +2,7 @@
 //!
 //! Uses unmodified local masters and externally supplied calibration. Never
 //! exports for print and never approves a label. No real card data is committed.
-use rbh_labels::layout::TextMeasurer;
+use rbh_labels::layout::{FitIssue, FrontTextLayout, TextMeasurer};
 use rbh_labels::{Classification, PreparedBatch};
 use serde_json::Value;
 use vectorcraft_text::FontDb;
@@ -269,7 +269,35 @@ pub fn generate_front_proof(mut master: Value, calibration: &Value, batch: &Prep
         let bounds = get(get(slot, "monogram")?, "control_point_envelope_pt")?.as_array().ok_or("missing monogram boundary")?;
         let monogram = bounds.first().and_then(Value::as_f64).ok_or("missing monogram X")?;
         let geometry = FrontLabelGeometry { text_left_pt: [left; 4], monogram_left_pt: monogram, clearance_pt: DEFAULT_CLEARANCE_PT };
-        let layout = fit_front_label(&label.card, geometry, &font)?;
+        let layout = if let Some(rows) = &label.print_rows {
+            // These are the exact four lines approved in RBH Grading. Do not
+            // reconstruct the card title, wrap, trim, or change its wording.
+            let available = monogram - left - DEFAULT_CLEARANCE_PT;
+            if !available.is_finite() || available <= 0.0 {
+                return Err(format!("cert {}: invalid calibrated text clearance", label.certification_number));
+            }
+            let mut issues = Vec::new();
+            for (index, line) in rows.iter().enumerate() {
+                let width = font.width_pt(line)?;
+                if !width.is_finite() || width < 0.0 {
+                    return Err(format!("cert {}: invalid text measurement", label.certification_number));
+                }
+                if width > available {
+                    issues.push(FitIssue::SingleLineOverflow {
+                        row: (index + 1) as u8, measured_pt: width, allowed_pt: available,
+                    });
+                }
+            }
+            FrontTextLayout {
+                row_1: rows[0].clone(),
+                row_2: rows[1].clone(),
+                row_3: rows[2].clone(),
+                row_4: if rows[3].is_empty() { None } else { Some(rows[3].clone()) },
+                issues,
+            }
+        } else {
+            fit_front_label(&label.card, geometry, &font)?
+        };
         if !layout.fits() {
             return Err(format!("cert {}: card identification exceeds calibrated rows: {:?}", label.certification_number, layout.issues));
         }
