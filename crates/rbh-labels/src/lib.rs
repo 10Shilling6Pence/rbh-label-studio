@@ -3,6 +3,8 @@
 //! This crate intentionally has no database, graphics, or network dependency.
 //! It does not modify the grades assigned by RBH Grading.
 
+pub mod layout;
+
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};

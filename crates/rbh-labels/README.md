@@ -38,3 +38,22 @@ cargo test -p rbh-labels -j 1
 The first release of this component uses `crates/rbh-labels/examples/example_batch.json`
 with fictional certification numbers. The RBH website will later emit this schema via
 a staff-only export; this crate does not change the website.
+
+## Phase 2A — front-label text layout contract
+
+`layout::layout_front_text` uses the exact width reported by a `TextMeasurer`
+implementation. Rows 1 and 2 cannot wrap; the set number must remain on row 3;
+only title words may continue onto row 4. Rows 5 and 6 remain the separate fixed
+2×2 subgrade grid and are never affected by card-text fitting.
+
+The caller supplies `FrontRowLimits` in **PostScript points**. There are no guessed
+or hard-coded production widths. Values must be calibrated from the actual RBH
+master artwork, with a safety clearance before the monogram. The production
+`TextMeasurer` must use the installed Helvetica Neue Bold font and the original
+point size and spacing; character-count approximations are not sufficient.
+
+Any overflow or unwrappable title yields a **blocking issue**, not silently
+shrunk, truncated, or modified text. The returned `fits()` result is only an
+automatic fit check; staff approval remains mandatory before production. Until
+font measurement, artwork calibration, and the preview/approval workflow are
+implemented, this module alone does not generate printable labels.
