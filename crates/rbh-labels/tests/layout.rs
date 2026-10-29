@@ -8,12 +8,15 @@ use rbh_labels::layout::{FitIssue, FrontRowLimits, TextMeasurer, layout_front_te
 struct FakeFont;
 impl TextMeasurer for FakeFont {
     fn width_pt(&self, text: &str) -> Result<f64, String> {
-        Ok(text.chars().map(|c| match c {
-            'W' => 9.0,
-            'I' => 2.0,
-            ' ' => 2.0,
-            _ => 5.0,
-        }).sum())
+        Ok(text
+            .chars()
+            .map(|c| match c {
+                'W' => 9.0,
+                'I' => 2.0,
+                ' ' => 2.0,
+                _ => 5.0,
+            })
+            .sum())
     }
 }
 

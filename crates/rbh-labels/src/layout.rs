@@ -21,12 +21,7 @@ pub struct FrontRowLimits {
 
 impl FrontRowLimits {
     fn validate(self) -> Result<(), String> {
-        for (row, value) in [
-            (1, self.row_1_pt),
-            (2, self.row_2_pt),
-            (3, self.row_3_pt),
-            (4, self.row_4_pt),
-        ] {
+        for (row, value) in [(1, self.row_1_pt), (2, self.row_2_pt), (3, self.row_3_pt), (4, self.row_4_pt)] {
             if !value.is_finite() || value <= 0.0 || value > 648.0 {
                 return Err(format!("row {row} text limit must be finite and between 0 and 648 pt"));
             }
@@ -87,11 +82,7 @@ fn third_row(number: &str, title: &str) -> String {
 /// when the whole title fits on row 3. Nothing is clipped or silently omitted.
 /// If wrapping cannot fit in two rows, the full original text is returned on
 /// row 3 with a blocking QA issue, rather than losing any words.
-pub fn layout_front_text<M: TextMeasurer>(
-    card: &CardIdentity,
-    limits: FrontRowLimits,
-    measurer: &M,
-) -> Result<FrontTextLayout, String> {
+pub fn layout_front_text<M: TextMeasurer>(card: &CardIdentity, limits: FrontRowLimits, measurer: &M) -> Result<FrontTextLayout, String> {
     limits.validate()?;
     if card.year_manufacturer_language.trim().is_empty()
         || card.variant.trim().is_empty()
@@ -104,10 +95,7 @@ pub fn layout_front_text<M: TextMeasurer>(
         return Err("set number and title must use canonical spacing; check the source card data".into());
     }
     let mut issues = Vec::new();
-    for (row, value, allowed) in [
-        (1_u8, card.year_manufacturer_language.as_str(), limits.row_1_pt),
-        (2_u8, card.variant.as_str(), limits.row_2_pt),
-    ] {
+    for (row, value, allowed) in [(1_u8, card.year_manufacturer_language.as_str(), limits.row_1_pt), (2_u8, card.variant.as_str(), limits.row_2_pt)] {
         let width = measured(measurer, value)?;
         if width > allowed {
             issues.push(FitIssue::SingleLineOverflow { row, measured_pt: width, allowed_pt: allowed });
@@ -116,13 +104,7 @@ pub fn layout_front_text<M: TextMeasurer>(
 
     let all = third_row(&card.set_number, &card.title);
     if measured(measurer, &all)? <= limits.row_3_pt {
-        return Ok(FrontTextLayout {
-            row_1: card.year_manufacturer_language.clone(),
-            row_2: card.variant.clone(),
-            row_3: all,
-            row_4: None,
-            issues,
-        });
+        return Ok(FrontTextLayout { row_1: card.year_manufacturer_language.clone(), row_2: card.variant.clone(), row_3: all, row_4: None, issues });
     }
 
     let words: Vec<&str> = card.title.split(' ').collect();
@@ -142,11 +124,5 @@ pub fn layout_front_text<M: TextMeasurer>(
     }
 
     issues.push(FitIssue::TitleDoesNotFitTwoRows);
-    Ok(FrontTextLayout {
-        row_1: card.year_manufacturer_language.clone(),
-        row_2: card.variant.clone(),
-        row_3: all,
-        row_4: None,
-        issues,
-    })
+    Ok(FrontTextLayout { row_1: card.year_manufacturer_language.clone(), row_2: card.variant.clone(), row_3: all, row_4: None, issues })
 }

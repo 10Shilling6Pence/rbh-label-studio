@@ -4248,6 +4248,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rbh-label-fonts"
+version = "0.1.0"
+dependencies = [
+ "rbh-labels",
+ "vectorcraft-doc",
+ "vectorcraft-geom",
+ "vectorcraft-text",
+]
+
+[[package]]
 name = "rbh-labels"
 version = "0.1.0"
 dependencies = [

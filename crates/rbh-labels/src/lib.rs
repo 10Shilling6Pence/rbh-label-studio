@@ -58,11 +58,7 @@ pub fn grade_title(grade: f64) -> Option<&'static str> {
 
 fn grade_text(grade: f64) -> Option<String> {
     let steps = half_steps(grade)?;
-    Some(if steps % 2 == 0 {
-        format!("{}", steps / 2)
-    } else {
-        format!("{}.5", steps / 2)
-    })
+    Some(if steps % 2 == 0 { format!("{}", steps / 2) } else { format!("{}.5", steps / 2) })
 }
 
 /// Input contract for an export from RBH Grading. No customer PII is needed.
@@ -159,12 +155,9 @@ fn validate_card(card: &CardIdentity) -> Result<(), String> {
 }
 
 fn validate_subgrades(subgrades: &Subgrades) -> Result<(), String> {
-    for (name, value) in [
-        ("centering", subgrades.centering),
-        ("corners", subgrades.corners),
-        ("edges", subgrades.edges),
-        ("surface", subgrades.surface),
-    ] {
+    for (name, value) in
+        [("centering", subgrades.centering), ("corners", subgrades.corners), ("edges", subgrades.edges), ("surface", subgrades.surface)]
+    {
         if grade_title(value).is_none() {
             return Err(format!("invalid {name} subgrade {value}: expected 1–10 in half-point steps"));
         }
