@@ -4248,6 +4248,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rbh-labels"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "read-fonts"
 version = "0.39.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
