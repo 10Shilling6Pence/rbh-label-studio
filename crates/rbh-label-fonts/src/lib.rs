@@ -4,6 +4,8 @@
 //! RBH certification model remains independent of graphics and system fonts.
 //! Font files are NEVER included in this crate or in the public repository.
 
+pub mod front_proof;
+
 use rbh_labels::CardIdentity;
 use rbh_labels::layout::{FrontRowLimits, FrontTextLayout, TextMeasurer, layout_front_text};
 use vectorcraft_doc::{CharStyle, TextObject};

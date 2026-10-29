@@ -4252,6 +4252,7 @@ name = "rbh-label-fonts"
 version = "0.1.0"
 dependencies = [
  "rbh-labels",
+ "serde_json",
  "vectorcraft-doc",
  "vectorcraft-geom",
  "vectorcraft-text",

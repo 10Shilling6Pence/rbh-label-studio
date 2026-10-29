@@ -13,6 +13,7 @@ rbh-labels = { path = "../rbh-labels" }
 vectorcraft-text = { workspace = true }
 vectorcraft-doc = { workspace = true }
 vectorcraft-geom = { workspace = true }
+serde_json = { workspace = true }
 
 # The integration tests use bundled Source Sans 3 as an open-licensed fixture.
 # Production continues to require an exact local Helvetica Neue Bold match.

@@ -1,0 +1,105 @@
+diff --git a/crates/rbh-label-fonts/README-front-proof.md b/crates/rbh-label-fonts/README-front-proof.md
+index 80d947b..e63b125 100644
+--- a/crates/rbh-label-fonts/README-front-proof.md
++++ b/crates/rbh-label-fonts/README-front-proof.md
+@@ -25,8 +25,9 @@ This prototype copies the original artwork, replaces the grade, designation,
+ certification number, and identification text, and populates four subgrade values
+ for numerical grades. Samples retain the four fixed subgrade headings with
+ `#` (ungraded) placeholders; Custom/Alter labels leave that area empty. Unused slots are
+-cleared so they cannot retain old certification information. The RBH monogram
+-and registration marks are preserved. The empty `L04 title3` wrapper receives
++cleared of previous text **and their individual RBH monograms** so partial
++batches have no stray logos. Populated-slot logos and sheet registration marks
++are preserved. The empty `L04 title3` wrapper receives
+ an editable text object when slot 4 is populated.
+ 
+ **Limits:** front side only; no QR code, rear-sheet pairing, approvals, print
+diff --git a/crates/rbh-label-fonts/src/front_proof.rs b/crates/rbh-label-fonts/src/front_proof.rs
+index 7aa5425..e50573c 100644
+--- a/crates/rbh-label-fonts/src/front_proof.rs
++++ b/crates/rbh-label-fonts/src/front_proof.rs
+@@ -120,6 +120,30 @@ fn id_for(fields: &Value, name: &str) -> Result<Option<u64>, String> {
+     node_id(get(fields, name)?)
+ }
+ 
++/// In a partial batch, remove the RBH logo from an *unfilled* label slot.
++/// Only the monogram node identified by calibration is removed; the slot's
++/// remaining structure, artwork in occupied slots and sheet crop marks stay.
++fn remove_unused_monogram(master: &mut Value, slot: &Value) -> Result<(), String> {
++    let group_id = get(slot, "group_node_id")?.as_u64().ok_or("slot group node ID missing")?;
++    let group_name = get(slot, "group_name")?.as_str().ok_or("slot group name missing")?;
++    let logo_id = get(get(slot, "monogram")?, "node_id")?.as_u64().ok_or("monogram node ID missing")?;
++    let group = find_node_mut(master, group_id).ok_or_else(|| format!("slot {group_name} not found"))?;
++    if group.get("name").and_then(Value::as_str) != Some(group_name) {
++        return Err(format!("slot {group_name} group name does not match calibration"));
++    }
++    let children = group["kind"]["children"].as_array_mut().ok_or("slot has no children")?;
++    let position = children.iter().position(|node| node.get("id").and_then(Value::as_u64) == Some(logo_id))
++        .ok_or_else(|| format!("slot {group_name} missing calibrated monogram {logo_id}"))?;
++    let logo = children.get(position).ok_or("calibrated monogram index invalid")?;
++    if logo["kind"]["type"].as_str() != Some("group")
++        || !logo.get("name").and_then(Value::as_str).is_some_and(|name| name.starts_with("rbh-logo-local"))
++    {
++        return Err(format!("slot {group_name} calibrated monogram does not match the expected logo group"));
++    }
++    children.remove(position);
++    Ok(())
++}
++
+ /// Samples display the normal four subgrade headings with # placeholders,
+ /// making their labels useful as reference samples without assigning scores.
+ /// Custom/Alter labels reserve the entire subgrade area for future use.
+@@ -225,8 +249,8 @@ fn verify_master(master: &Value, calibration: &Value) -> Result<(), String> {
+ }
+ 
+ /// Populate a 20-position front sheet with up to 20 certification records.
+-/// Remaining slots are intentionally blanked; monograms and registration marks
+-/// remain. Output is always an **unapproved QA draft**, never print authorized.
++/// Remaining slots have all text and their individual monograms removed; sheet
++/// registration marks remain. Output is always an **unapproved QA draft**.
+ /// Errors return without modifying the original master.
+ pub fn generate_front_proof(mut master: Value, calibration: &Value, batch: &PreparedBatch, db: &FontDb) -> Result<Value, String> {
+     verify_master(&master, calibration)?;
+@@ -311,6 +335,9 @@ pub fn generate_front_proof(mut master: Value, calibration: &Value, batch: &Prep
+                     replace_at(&mut master, id, "", None)?;
+                 }
+             }
++            // Unfilled positions must not print a standalone RBH monogram.
++            // The crop marks are separate sheet-level groups and stay intact.
++            remove_unused_monogram(&mut master, slot)?;
+         }
+     }
+     Ok(master)
+@@ -351,6 +378,32 @@ mod tests {
+         assert!(subgrade_display(Classification::Graded, None).is_err());
+     }
+ 
++    #[test]
++    fn unused_slot_removes_only_its_calibrated_monogram() {
++        let mut master = json!({"id": 1, "kind": {"type": "group", "children": [
++            {"id": 2, "name": "L04", "kind": {"type": "group", "children": [
++                {"id": 3, "name": "rbh-logo-local-4", "kind": {"type": "group", "children": []}},
++                {"id": 4, "name": "L04 title1", "kind": {"type": "group", "children": []}}
++            ]}},
++            {"id": 5, "name": "crop-marks", "kind": {"type": "group", "children": []}}
++        ]}});
++        let slot = json!({"group_node_id": 2, "group_name": "L04", "monogram": {"node_id": 3}});
++        remove_unused_monogram(&mut master, &slot).unwrap();
++        assert!(find_node(&master, 3).is_none());
++        assert!(find_node(&master, 4).is_some());
++        assert!(find_node(&master, 5).is_some());
++    }
++
++    #[test]
++    fn unexpected_logo_id_is_not_removed() {
++        let mut master = json!({"id": 1, "name": "L04", "kind": {"type": "group", "children": [
++            {"id": 2, "name": "L04 title1", "kind": {"type": "group", "children": []}}
++        ]}});
++        let slot = json!({"group_node_id": 1, "group_name": "L04", "monogram": {"node_id": 2}});
++        assert!(remove_unused_monogram(&mut master, &slot).is_err());
++        assert!(find_node(&master, 2).is_some());
++    }
++
+     #[test]
+     fn custom_subgrade_grid_is_reserved_and_blank() {
+         assert_eq!(subgrade_display(Classification::Custom, None).unwrap(), None);
