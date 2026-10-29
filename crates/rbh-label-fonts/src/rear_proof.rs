@@ -195,8 +195,13 @@ pub fn validate_full_sheet(count: usize) -> Result<(), String> {
     if count == 20 { Ok(()) } else { Err(format!("production sheet requires 20 approved labels; found {count}")) }
 }
 
-/// Rear slots follow the same position order as the front generator (L01..L20).
-/// No horizontal mirroring is applied until duplex orientation has been verified.
+/// The physical duplex orientation requires a printed registration test.
+/// For the RBH duplex orientation, each rear slot uses the certification from
+/// the opposite column in the same row; QR geometry and positions are unchanged.
+fn rear_cert_index(rear_slot_index: usize) -> usize {
+    rear_slot_index ^ 1
+}
+
 /// The output is a draft, never an approved print-shop file.
 pub fn generate_rear_proof(mut master: Value, calibration: &Value, batch: &PreparedBatch) -> Result<Value, String> {
     if batch.labels.is_empty() || batch.labels.len() > 20 {
@@ -238,7 +243,11 @@ pub fn generate_rear_proof(mut master: Value, calibration: &Value, batch: &Prepa
         let center = point(slot, "qr_center_pt")?;
         let size = point(slot, "qr_size_pt")?;
         let black_width = original_qr_black_width_pt(size)?;
-        let children = if let Some(cert) = batch.labels.get(i) { qr_art(&cert.qr_url, center, black_width, &mut next_id)? } else { Vec::new() };
+        let children = if let Some(cert) = batch.labels.get(rear_cert_index(i)) {
+            qr_art(&cert.qr_url, center, black_width, &mut next_id)?
+        } else {
+            Vec::new()
+        };
         generated.push((id, children));
     }
     // Clear old QR artwork. Each occupied position now receives a vector QR
@@ -261,6 +270,16 @@ pub fn generate_rear_proof(mut master: Value, calibration: &Value, batch: &Prepa
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rear_qr_certifications_mirror_across_each_row() {
+        for row in 0..10 {
+            let left = row * 2;
+            let right = left + 1;
+            assert_eq!(rear_cert_index(left), right);
+            assert_eq!(rear_cert_index(right), left);
+        }
+    }
 
     #[test]
     fn removes_only_legacy_unlinked_white_paths_not_new_qrs_or_branding() {
