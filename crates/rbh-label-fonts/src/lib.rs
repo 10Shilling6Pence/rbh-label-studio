@@ -5,6 +5,7 @@
 //! Font files are NEVER included in this crate or in the public repository.
 
 pub mod front_proof;
+pub mod rear_proof;
 
 use rbh_labels::CardIdentity;
 use rbh_labels::layout::{FrontRowLimits, FrontTextLayout, TextMeasurer, layout_front_text};
