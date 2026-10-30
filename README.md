@@ -44,6 +44,20 @@ The underlying vector editor remains available for viewing and editing documents
 
 The current production tool requires **exactly 20 validated certifications** to enable full-sheet generation. Smaller imports can be reviewed but do not produce a full production sheet.
 
+## Production previews
+
+These screenshots show a complete **20-label demonstration batch** made with fictional certification numbers and placeholder card details; no customer submissions or real card identities are shown. The front includes graded cards (10, 9.5, 9, 8.5, and 8), sample labels, and custom labels.
+
+### Front label sheet
+
+![RBH Label Studio front sheet with graded, sample, and custom demonstration labels](docs/images/rbh-label-production-front.png)
+
+### Mirrored rear label sheet
+
+![RBH Label Studio mirrored rear sheet with monograms and demonstration QR codes](docs/images/rbh-label-production-rear.png)
+
+The rear artwork is mirrored for double-sided sheet alignment. These are demonstration screenshots, not approved printing proofs; physical registration must be verified before production.
+
 ## Production workflow
 
 1. Open **RBH Label Production** from the launcher in the editor's lower-right corner.
