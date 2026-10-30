@@ -46,7 +46,7 @@ The current production tool requires **exactly 20 validated certifications** to 
 
 ## Production previews
 
-These screenshots show a complete **20-label demonstration batch** made with fictional certification numbers and placeholder card details; no customer submissions or real card identities are shown. The front includes graded cards (10, 9.5, 9, 8.5, and 8), sample labels, and custom labels.
+These screenshots show a complete **20-label demonstration batch**.
 
 ### Front label sheet
 
