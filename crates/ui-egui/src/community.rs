@@ -43,7 +43,7 @@ pub fn discord_button(app: &mut VectorcraftApp, ui: &mut Ui, large: bool) -> egu
         icons::paint(ui, "message-circle", ir, DISCORD);
         ui.painter().galley(egui::pos2(ir.right() + h * 0.2, at.y), galley, if resp.hovered() { t.text_strong } else { t.text });
     }
-    let resp = resp.on_hover_text(tl!("Join the ArtCraft community on Discord (discord.gg/artcraft)"));
+    let resp = resp.on_hover_text(tl!("Join the RBH community on Discord (discord.gg/5jvBRNw27j)"));
     if resp.clicked() {
         app.open_link("help.discord");
     }
@@ -68,8 +68,7 @@ pub fn links(app: &mut VectorcraftApp, ui: &mut Ui) {
     ui.add_space(8.0);
     let l = app.session.execute("help.links", &serde_json::json!({})).unwrap_or_default();
     let s = |k: &str| l[k].as_str().unwrap_or("").to_string();
-    link(app, ui, "globe", tl!("ArtCraft website"), "help.website", &s("website"));
-    link(app, ui, "external-link", tl!("VectorCraft on getartcraft.com"), "help.appPage", &s("appPage"));
+    link(app, ui, "globe", "RBH Grading website", "help.website", &s("website"));
     link(app, ui, "git-branch", tl!("Source code on GitHub"), "help.github", &s("github"));
 }
 
@@ -90,15 +89,15 @@ mod tests {
         assert_eq!(
             *opened.lock().unwrap(),
             [
-                "https://discord.gg/artcraft",
-                "https://getartcraft.com",
-                "https://getartcraft.com/apps/vectorcraft",
-                "https://github.com/storytold/vectorcraft"
+                "https://discord.gg/5jvBRNw27j",
+                "https://www.rbhgrading.com",
+                "https://www.rbhgrading.com",
+                "https://github.com/10Shilling6Pence/rbh-label-studio"
             ]
         );
         // The control channel / MCP path returns the URL without opening a browser.
         let v = app.run("help.discord", serde_json::json!({})).unwrap();
-        assert_eq!(v["url"], "https://discord.gg/artcraft");
+        assert_eq!(v["url"], "https://discord.gg/5jvBRNw27j");
         assert_eq!(opened.lock().unwrap().len(), 4);
         let ctx = egui::Context::default();
         theme::install_fonts(&ctx);
