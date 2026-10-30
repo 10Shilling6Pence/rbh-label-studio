@@ -143,8 +143,8 @@ pub fn system_title_bar(app: &VectorcraftApp) -> bool {
 pub fn window_title(app: &VectorcraftApp) -> String {
     app.session
         .active()
-        .map(|d| format!("{}{} \u{2014} VectorCraft", if d.is_dirty() { "*" } else { "" }, d.title()))
-        .unwrap_or_else(|| "VectorCraft".into())
+        .map(|d| format!("{}{} \u{2014} RBH Studio", if d.is_dirty() { "*" } else { "" }, d.title()))
+        .unwrap_or_else(|| "RBH Studio".into())
 }
 
 /// Keep the OS window title (and the taskbar / Alt-Tab entry) on the active file. Sends
