@@ -8,7 +8,9 @@ use super::xwayland;
 fn app_icon() -> egui::IconData {
     #[cfg(target_os = "macos")]
     let png: &[u8] = include_bytes!("../../../assets/app-icon/vectorcraft-macos-512.png");
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
+    let png: &[u8] = include_bytes!("rbh-app-icon.png");
+    #[cfg(not(any(target_os = "macos", windows)))]
     let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.vectorcraft.png");
     eframe::icon_data::from_png_bytes(png).unwrap_or_default()
 }
@@ -105,7 +107,7 @@ pub(crate) fn custom_titlebar(saved: Option<&vectorcraft_ui_egui::UiState>) -> b
 pub(crate) fn native_options(custom_titlebar: bool) -> eframe::NativeOptions {
     eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("VectorCraft")
+            .with_title("RBH Label Studio")
             .with_inner_size(window::DEFAULT_SIZE)
             .with_min_inner_size(window::MIN_SIZE)
             .with_drag_and_drop(true)
@@ -114,7 +116,7 @@ pub(crate) fn native_options(custom_titlebar: bool) -> eframe::NativeOptions {
             .with_titlebar_shown(false)
             .with_title_shown(false)
             .with_icon(app_icon())
-            .with_app_id("ai.storyteller.vectorcraft"),
+            .with_app_id(if cfg!(windows) { "com.rbhgrading.labelstudio" } else { "ai.storyteller.vectorcraft" }),
         ..Default::default()
     }
 }

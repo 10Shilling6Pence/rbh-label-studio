@@ -6,19 +6,19 @@
 
 fn main() -> Result<(), String> {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=../../assets/app-icon/vectorcraft.ico");
+    println!("cargo:rerun-if-changed=src/rbh-app-icon.ico");
     println!("cargo:rerun-if-env-changed=VECTORCRAFT_REQUIRE_WINRES");
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") {
         return Ok(());
     }
     let mut res = winresource::WindowsResource::new();
-    res.set_icon("../../assets/app-icon/vectorcraft.ico")
-        .set("ProductName", "VectorCraft")
-        .set("FileDescription", "VectorCraft vector illustration editor")
-        .set("CompanyName", "Learning Machines LLC")
+    res.set_icon("src/rbh-app-icon.ico")
+        .set("ProductName", "RBH Label Studio")
+        .set("FileDescription", "RBH Label Studio - card label production and vector editor")
+        .set("CompanyName", "RBH eHoldings LLC")
         .set("LegalCopyright", "Copyright (c) the VectorCraft authors. MIT OR Apache-2.0.")
         .set("OriginalFilename", "vectorcraft.exe")
-        .set("InternalName", "vectorcraft");
+        .set("InternalName", "rbh-label-studio");
     if let Err(e) = res.compile() {
         if std::env::var_os("VECTORCRAFT_REQUIRE_WINRES").is_some() {
             return Err(format!("embedding Windows resources failed: {e}"));

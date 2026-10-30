@@ -1,0 +1,75 @@
+diff --git a/apps/vectorcraft/build.rs b/apps/vectorcraft/build.rs
+--- a/apps/vectorcraft/build.rs
++++ b/apps/vectorcraft/build.rs
+@@ -6,19 +6,19 @@
+ 
+ fn main() -> Result<(), String> {
+     println!("cargo:rerun-if-changed=build.rs");
+-    println!("cargo:rerun-if-changed=../../assets/app-icon/vectorcraft.ico");
++    println!("cargo:rerun-if-changed=src/rbh-app-icon.ico");
+     println!("cargo:rerun-if-env-changed=VECTORCRAFT_REQUIRE_WINRES");
+     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") {
+         return Ok(());
+     }
+     let mut res = winresource::WindowsResource::new();
+-    res.set_icon("../../assets/app-icon/vectorcraft.ico")
+-        .set("ProductName", "VectorCraft")
+-        .set("FileDescription", "VectorCraft vector illustration editor")
+-        .set("CompanyName", "Learning Machines LLC")
++    res.set_icon("src/rbh-app-icon.ico")
++        .set("ProductName", "RBH Label Studio")
++        .set("FileDescription", "RBH Label Studio - card label production and vector editor")
++        .set("CompanyName", "RBH eHoldings LLC")
+         .set("LegalCopyright", "Copyright (c) the VectorCraft authors. MIT OR Apache-2.0.")
+         .set("OriginalFilename", "vectorcraft.exe")
+-        .set("InternalName", "vectorcraft");
++        .set("InternalName", "rbh-label-studio");
+     if let Err(e) = res.compile() {
+         if std::env::var_os("VECTORCRAFT_REQUIRE_WINRES").is_some() {
+             return Err(format!("embedding Windows resources failed: {e}"));
+diff --git a/apps/vectorcraft/src/titlebar.rs b/apps/vectorcraft/src/titlebar.rs
+--- a/apps/vectorcraft/src/titlebar.rs
++++ b/apps/vectorcraft/src/titlebar.rs
+@@ -8,7 +8,9 @@
+ fn app_icon() -> egui::IconData {
+     #[cfg(target_os = "macos")]
+     let png: &[u8] = include_bytes!("../../../assets/app-icon/vectorcraft-macos-512.png");
+-    #[cfg(not(target_os = "macos"))]
++    #[cfg(windows)]
++    let png: &[u8] = include_bytes!("rbh-app-icon.png");
++    #[cfg(not(any(target_os = "macos", windows)))]
+     let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.vectorcraft.png");
+     eframe::icon_data::from_png_bytes(png).unwrap_or_default()
+ }
+diff --git a/apps/vectorcraft/src/titlebar.rs b/apps/vectorcraft/src/titlebar.rs
+--- a/apps/vectorcraft/src/titlebar.rs
++++ b/apps/vectorcraft/src/titlebar.rs
+@@ -105,16 +105,16 @@
+ pub(crate) fn native_options(custom_titlebar: bool) -> eframe::NativeOptions {
+     eframe::NativeOptions {
+         viewport: egui::ViewportBuilder::default()
+-            .with_title("VectorCraft")
++            .with_title("RBH Label Studio")
+             .with_inner_size(window::DEFAULT_SIZE)
+             .with_min_inner_size(window::MIN_SIZE)
+             .with_drag_and_drop(true)
+             .with_decorations(!custom_titlebar)
+             .with_fullsize_content_view(true)
+             .with_titlebar_shown(false)
+             .with_title_shown(false)
+             .with_icon(app_icon())
+-            .with_app_id("ai.storyteller.vectorcraft"),
++            .with_app_id(if cfg!(windows) { "com.rbhgrading.labelstudio" } else { "ai.storyteller.vectorcraft" }),
+         ..Default::default()
+     }
+ }
+diff --git a/apps/vectorcraft/src/main.rs b/apps/vectorcraft/src/main.rs
+--- a/apps/vectorcraft/src/main.rs
++++ b/apps/vectorcraft/src/main.rs
+@@ -353,5 +353,5 @@
+         }
+         #[cfg(not(target_os = "linux"))]
+         {
+-            eframe::run_native("VectorCraft", options, app_creator)
++            eframe::run_native("RBH Label Studio", options, app_creator)
+         }

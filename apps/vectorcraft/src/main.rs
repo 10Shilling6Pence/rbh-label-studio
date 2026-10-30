@@ -353,7 +353,7 @@ fn main() -> std::process::ExitCode {
         }
         #[cfg(not(target_os = "linux"))]
         {
-            eframe::run_native("VectorCraft", options, app_creator)
+            eframe::run_native("RBH Label Studio", options, app_creator)
         }
     };
     let outcome = vectorcraft_engine::guard::catch_panic(|| {
