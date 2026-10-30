@@ -43,6 +43,7 @@ mod open_documents;
 mod portal_save;
 mod prefs_dir;
 mod printing;
+mod rbh_workspace;
 #[cfg(windows)]
 mod system_fonts;
 mod tablet;
@@ -99,6 +100,8 @@ struct App {
     pending_maximize: bool,
     /// Frames left to retry [`window::apply_pending_maximize`].
     maximize_tries: u8,
+    /// Local production controls; independent of VectorCraft documents.
+    rbh_workspace: rbh_workspace::RbhWorkspace,
 }
 
 /// `vectorcraft --help`. Headless work (convert, run, MCP) is `vectorcraft-cli`'s.
@@ -466,6 +469,7 @@ fn main() -> std::process::ExitCode {
                     winit_window,
                     pending_maximize,
                     maximize_tries: 8,
+                    rbh_workspace: rbh_workspace::RbhWorkspace::new(),
                 }))
             }),
         )
